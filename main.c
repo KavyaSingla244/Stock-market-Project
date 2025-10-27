@@ -1,8 +1,7 @@
-# include <stdio.h> 
-
-# include "user.h"
-
-# include "orderbook.h"
+#include <stdio.h> 
+#include "colors.h"
+#include "user.h"
+#include "orderbook.h"
 
 int main() {
     int choice =0;
@@ -20,17 +19,10 @@ int main() {
 
         switch (choice){
             case 1:
-
-
-            printf("-> Calling the 'Register User' function....\n");
-
+            signup_user();
             break;
-
             case 2:
-
-
-            printf("->Calling the 'Login' function....\n");
-
+            login_user();
             break;
 
             case 3:

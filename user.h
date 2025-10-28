@@ -2,7 +2,7 @@
 #define USER_H
 
 struct PortfolioItem{
-    char ticket[30];
+    char ticker[30];
     int quantity;
 };
 

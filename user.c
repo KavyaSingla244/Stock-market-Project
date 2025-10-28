@@ -116,7 +116,9 @@ void trading_menu(struct User *currentUser){
                                 break;
                                 case 2:
                                 place_buy_order(currentUser);
+                                break;
                                 case 3:
+                                place_sell_order(currentUser);
                                 break;
                                 case 4:
                                 printf(GREEN "Logging out....\n" RESET);
@@ -139,7 +141,7 @@ void view_portfolio(struct User *currentUser) {
     }else {
         printf("\nYour stocks: \n");
         for (int i=0;i<currentUser->stocks_owned;i++){
-            printf(" %s : %d shares\n",currentUser->portfolio[i].ticket,currentUser->portfolio[i].quantity);
+            printf(" %s : %d shares\n",currentUser->portfolio[i].ticker,currentUser->portfolio[i].quantity);
         }
     }
     printf(YELLOW "--------------------\n" RESET);

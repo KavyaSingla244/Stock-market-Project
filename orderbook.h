@@ -1,6 +1,7 @@
 #ifndef ORDERBOOK_H
 #define ORDERBOOK_H
 #include "user.h"
+
 struct Order
 
 {
@@ -14,5 +15,6 @@ struct Order
     struct Order *next;
 };
 void place_buy_order(struct User *currentUser);
+void place_sell_order(struct User *currentUser);
 #endif
 

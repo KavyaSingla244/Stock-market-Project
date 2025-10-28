@@ -147,3 +147,52 @@ void view_portfolio(struct User *currentUser) {
     printf(YELLOW "--------------------\n" RESET);
 
 }
+
+
+void load_all_data(){
+    FILE *user_file=fopen("users.txt","r");
+    if (user_file==NULL){
+        printf("No user database found.Starting fresh.\n");
+        return;
+    }
+
+    char username[50];
+    char password[50];
+    double cash;
+
+    while(fscanf(user_file,"%[^,],%[^,],%lf\n",username,password,&cash)==3){
+        if(number_of_users_registered>=100){
+            break;
+        }
+        struct User *currentUser=&all_users[number_of_users_registered];
+
+        strcpy(currentUser->username,username);
+        strcpy(currentUser->password,password);
+        currentUser->cash_balance=cash;
+        currentUser->available_cash=cash;
+        currentUser->stocks_owned=0;
+        char portfolio_filename[100];
+        sprintf(portfolio_filename,"%s_portfolio.txt",username);
+        FILE *portfolio_file=fopen(portfolio_filename,"r");
+        if (portfolio_file!=NULL){
+            char ticker[30];
+            int quantity;
+            int stock_index=0;
+
+            while(fscanf(portfolio_file,"%[^,],%d\n",ticker,&quantity)==2){
+                if (stock_index>=30)
+                break;
+
+                strcpy(currentUser->portfolio[stock_index].ticker,ticker);
+                currentUser->portfolio[stock_index].quantity=quantity;
+                stock_index++;
+            }
+            currentUser->stocks_owned=stock_index;
+            fclose(portfolio_file);
+        }
+        number_of_users_registered++;
+
+
+    }
+    fclose(user_file);
+}

@@ -5,6 +5,7 @@
 
 int main() {
     int choice =0;
+    load_all_data();
 
     while(1){
     

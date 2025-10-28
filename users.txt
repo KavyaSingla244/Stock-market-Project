@@ -1,0 +1,4 @@
+seller_A,pass123,5000.00
+buyer_ B,hit223,20000.00
+whale_C,blue123,500000.00
+beginner_D,hello123,1000.00

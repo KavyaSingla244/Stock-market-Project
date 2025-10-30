@@ -4,6 +4,7 @@
 struct PortfolioItem{
     char ticker[30];
     int quantity;
+    double avg_cost;
 };
 
 struct User {

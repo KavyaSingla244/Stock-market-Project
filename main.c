@@ -1,9 +1,12 @@
 #include <stdio.h> 
 #include "colors.h"
 #include "user.h"
+#include <time.h>
+#include <stdlib.h>
 #include "orderbook.h"
 
 int main() {
+    srand(time(NULL));
     int choice =0;
     load_all_data();
 

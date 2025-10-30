@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <string.h>
-
 #include "user.h"
 #include "colors.h"
 #include "orderbook.h"
@@ -99,6 +98,7 @@ void trading_menu(struct User *currentUser){
                         int choice=0;
 
                         while(1){
+                            fluctuate_prices();
                             printf(CYAN "\n---  %s's Trading Menu ---\n" RESET,currentUser->username);
                             printf("Your cash: $%.2f\n", currentUser->cash_balance);
                             printf("-------------------------\n");
@@ -217,29 +217,26 @@ void save_all_data() {
             return;
         }
 
-        // 1. Loop through every registered user
+        
         for (int i = 0; i < number_of_users_registered; i++) {
             struct User *currentUser = &all_users[i];
 
-            // 2. Save their main data to users.txt
-            fprintf(user_file, "%s,%s,%.2f\n",
+                        fprintf(user_file, "%s,%s,%.2f\n",
                     currentUser->username,
                     currentUser->password,
-                    currentUser->cash_balance); // We save the "real" cash balance
+                    currentUser->cash_balance); 
 
-            // 3. Now, save their individual portfolio
-            if (currentUser->stocks_owned > 0) {
+                        if (currentUser->stocks_owned > 0) {
                 char portfolio_filename[100];
                 sprintf(portfolio_filename, "%s_portfolio.txt", currentUser->username);
 
                 FILE *portfolio_file = fopen(portfolio_filename, "w");
                 if (portfolio_file == NULL) {
                     printf(RED "Error: Could not save portfolio for %s\n" RESET, currentUser->username);
-                    continue; // Skip this user
+                    continue; 
                 }
 
-                // 4. Loop through their stocks and write to their file
-                for (int j = 0; j < currentUser->stocks_owned; j++) {
+                            for (int j = 0; j < currentUser->stocks_owned; j++) {
                     fprintf(portfolio_file, "%s,%d\n",
                             currentUser->portfolio[j].ticker,
                             currentUser->portfolio[j].quantity);

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "orderbook.h"
 #include "user.h"
 #include "colors.h"
@@ -14,6 +15,13 @@ const char* VALID_STOCKS[]={
     "TATA","RELI","WIPRO","INFOSYS","HDFC","SBI"
 };
 const int NUM_VALID_STOCKS=6;
+
+double live_tata_price = 500.00;
+double live_reli_price = 3100.00;
+double live_wipro_price = 450.00;
+double live_infy_price = 1520.00;
+double live_hdfc_price = 1600.00;
+double live_sbi_price = 600.00;
 
 
 int is_ticker_valid(char* ticker_input) {
@@ -171,17 +179,35 @@ void place_sell_order(struct User *currentUser){
 
 
 
-static void update_portfolio(struct User *user, char *ticker, int quantity) {
+
+ 
+static void update_portfolio(struct User *user, char *ticker, int quantity, double new_cost_per_share) {
     struct PortfolioItem *item = get_portfolio_item(user, ticker);
 
     if (item != NULL) {
         
-        item->quantity += quantity;
+
+        
+        double old_total_cost = item->avg_cost * item->quantity;
+
+        
+        double new_total_cost = new_cost_per_share * quantity;
+
+        
+        int new_total_quantity = item->quantity + quantity;
+
+        
+        item->avg_cost = (old_total_cost + new_total_cost) / new_total_quantity;
+
+        
+        item->quantity = new_total_quantity;
+
     } else {
         
         if (user->stocks_owned < 30) { 
             strcpy(user->portfolio[user->stocks_owned].ticker, ticker);
             user->portfolio[user->stocks_owned].quantity = quantity;
+            user->portfolio[user->stocks_owned].avg_cost = new_cost_per_share; 
             user->stocks_owned++;
         }
     }
@@ -237,7 +263,7 @@ void match_trades() {
 
                 buyer->cash_balance -= trade_cost;
                 buyer->available_cash += refund; 
-                update_portfolio(buyer, buy_curr->ticker, buy_curr->quantity);
+                update_portfolio(buyer, buy_curr->ticker, buy_curr->quantity,trade_cost);
 
                 
 
@@ -280,4 +306,39 @@ void match_trades() {
             buy_curr = buy_curr->next;
         }
     } 
+}
+
+
+void fluctuate_prices() {
+    
+    double change_direction = ((double)rand() / (RAND_MAX / 2)) - 1.0; 
+
+    double change_percent = change_direction * 0.0005; 
+
+    int stock_to_change = rand() % 6; 
+
+    if (stock_to_change == 0) {
+        live_tata_price = live_tata_price * (1.0 + change_percent);
+    } else if (stock_to_change == 1) {
+        live_reli_price = live_reli_price * (1.0 + change_percent);
+    } else if (stock_to_change == 2) {
+        live_wipro_price = live_wipro_price * (1.0 + change_percent);
+    } else if (stock_to_change == 3) {
+        live_infy_price = live_infy_price * (1.0 + change_percent);
+    } else if (stock_to_change == 4) {
+        live_hdfc_price = live_hdfc_price * (1.0 + change_percent);
+    } else if (stock_to_change == 5) {
+        live_sbi_price = live_sbi_price * (1.0 + change_percent);
+    }
+}
+
+
+double get_live_price(char* ticker) {
+    if (strcmp(ticker, "TATA") == 0) return live_tata_price;
+    if (strcmp(ticker, "RELI") == 0) return live_reli_price;
+    if (strcmp(ticker, "WIPRO") == 0) return live_wipro_price;
+    if (strcmp(ticker, "INFY") == 0) return live_infy_price;
+    if (strcmp(ticker, "HDFC") == 0) return live_hdfc_price;
+    if (strcmp(ticker, "SBI") == 0) return live_sbi_price;
+    return 0.0;
 }

@@ -40,8 +40,8 @@ void signup_user(){
         }
     }
 
-    all_users[number_of_users_registered].cash_balance=starting_cash;
-    all_users[number_of_users_registered].available_cash=starting_cash;
+    all_users[number_of_users_registered].cash_balance=starting_cash; //
+    all_users[number_of_users_registered].available_cash=starting_cash; //
     all_users[number_of_users_registered].stocks_owned=0;
 
 
@@ -125,7 +125,7 @@ void trading_menu(struct User *currentUser){
                                 return;
                                 default:
                                 printf(RED "Invalid choice.Please try again.\n" RESET);
-                                while (getchar()!='\n');
+                                while (getchar()!='\n'); // ?
                             }
 
                         }

@@ -21,5 +21,7 @@ void login_user();
 void trading_menu(struct User *currentUser);
 void view_portfolio(struct User *currentUser);
 void load_all_data();
+struct User* find_user(char *username);
+void save_all_data();
 
 #endif

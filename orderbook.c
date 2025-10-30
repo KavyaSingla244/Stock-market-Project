@@ -11,9 +11,9 @@ struct Order *buy_order_head=NULL;
 struct Order *sell_order_head=NULL;
 
 const char* VALID_STOCKS[]={
-    "TATA","RELI","WIPRO"
+    "TATA","RELI","WIPRO","INFOSYS","HDFC","SBI"
 };
-const int NUM_VALID_STOCKS=3;
+const int NUM_VALID_STOCKS=6;
 
 
 int is_ticker_valid(char* ticker_input) {
@@ -111,6 +111,7 @@ void place_buy_order(struct User *currentUser){
 
     printf(GREEN "\nBuy order for %d shares of %s at %.2f placed successfully.\n" RESET,quantity_input,ticket_input,price_input);
     printf(" A total of $%.2f has been moved from 'Available Cash'.\n",total_cost);
+    match_trades();
 }
 
 void place_sell_order(struct User *currentUser){
@@ -166,4 +167,117 @@ void place_sell_order(struct User *currentUser){
 
     add_order_to_list(newOrder);
     printf(GREEN "\nSell order for %d shares %s at $%.2f placed successfully.\n" RESET,quantity_input,ticker_input,price_input);
+}
+
+
+
+static void update_portfolio(struct User *user, char *ticker, int quantity) {
+    struct PortfolioItem *item = get_portfolio_item(user, ticker);
+
+    if (item != NULL) {
+        
+        item->quantity += quantity;
+    } else {
+        
+        if (user->stocks_owned < 30) { 
+            strcpy(user->portfolio[user->stocks_owned].ticker, ticker);
+            user->portfolio[user->stocks_owned].quantity = quantity;
+            user->stocks_owned++;
+        }
+    }
+}
+
+
+void match_trades() {
+    struct Order *buy_prev = NULL;
+    struct Order *buy_curr = buy_order_head;
+
+    while (buy_curr != NULL) {
+        int trade_made = 0;
+        struct Order *sell_prev = NULL;
+        struct Order *sell_curr = sell_order_head;
+
+        
+        while (sell_curr != NULL) {
+
+
+            if (strcmp(buy_curr->ticker, sell_curr->ticker) == 0 &&
+                buy_curr->price >= sell_curr->price &&
+                buy_curr->quantity == sell_curr->quantity) 
+            {
+                
+                printf(MAGENTA "\n--- TRADE EXECUTED ---\n" RESET);
+                printf("  Ticker: %s\n", buy_curr->ticker);
+                printf("  Shares: %d\n", buy_curr->quantity);
+                printf("  Price:  $%.2f\n", sell_curr->price); 
+                printf("  Buyer:  %s\n", buy_curr->username);
+                printf("  Seller: %s\n", sell_curr->username);
+
+                double trade_cost = sell_curr->price * buy_curr->quantity;
+
+                struct User *buyer = find_user(buy_curr->username);
+                struct User *seller = find_user(sell_curr->username);
+
+                if (buyer == NULL || seller == NULL) {
+                    printf(RED "FATAL ERROR: Could not find user.\n" RESET);
+                    sell_prev = sell_curr;
+                    sell_curr = sell_curr->next;
+                    continue; 
+                }
+
+                
+                seller->cash_balance += trade_cost;
+                seller->available_cash += trade_cost;
+                struct PortfolioItem *sold_item = get_portfolio_item(seller, sell_curr->ticker);
+                sold_item->quantity -= sell_curr->quantity;
+
+                
+                double buy_cost = buy_curr->price * buy_curr->quantity;
+                double refund = buy_cost - trade_cost;
+
+                buyer->cash_balance -= trade_cost;
+                buyer->available_cash += refund; 
+                update_portfolio(buyer, buy_curr->ticker, buy_curr->quantity);
+
+                
+
+                if (buy_prev == NULL) {
+                    buy_order_head = buy_curr->next;
+                } else {
+                    buy_prev->next = buy_curr->next;
+                }
+
+                if (sell_prev == NULL) {
+                    sell_order_head = sell_curr->next;
+                } else {
+                    sell_prev->next = sell_curr->next;
+                }
+
+                struct Order *buy_to_free = buy_curr;
+                struct Order *sell_to_free = sell_curr;
+
+                buy_curr = buy_curr->next; 
+
+                free(buy_to_free);
+                free(sell_to_free);
+
+                trade_made = 1;
+                printf(MAGENTA "--- TRADE COMPLETE ---\n" RESET);
+                break; 
+
+            } else {
+                
+                sell_prev = sell_curr;
+                sell_curr = sell_curr->next;
+            }
+        } 
+
+        if (trade_made) {
+            continue; 
+        } else {
+            
+            buy_prev = buy_curr;
+            buy_curr = buy_curr->next;
+        }
+    } 
 }

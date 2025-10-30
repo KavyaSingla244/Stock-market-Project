@@ -196,3 +196,61 @@ void load_all_data(){
     }
     fclose(user_file);
 }
+
+
+struct User* find_user(char *username) {
+    for (int i = 0; i < number_of_users_registered; i++) {
+        if (strcmp(all_users[i].username, username) == 0) {
+            
+            return &all_users[i];
+        }
+    }
+    return NULL;
+}
+
+void save_all_data() {
+        // Open the main users file in "write" mode,
+        // which erases the old file.
+        FILE *user_file = fopen("users.txt", "w");
+        if (user_file == NULL) {
+            printf(RED "FATAL ERROR: Could not open users.txt for saving.\n" RESET);
+            return;
+        }
+
+        // 1. Loop through every registered user
+        for (int i = 0; i < number_of_users_registered; i++) {
+            struct User *currentUser = &all_users[i];
+
+            // 2. Save their main data to users.txt
+            fprintf(user_file, "%s,%s,%.2f\n",
+                    currentUser->username,
+                    currentUser->password,
+                    currentUser->cash_balance); // We save the "real" cash balance
+
+            // 3. Now, save their individual portfolio
+            if (currentUser->stocks_owned > 0) {
+                char portfolio_filename[100];
+                sprintf(portfolio_filename, "%s_portfolio.txt", currentUser->username);
+
+                FILE *portfolio_file = fopen(portfolio_filename, "w");
+                if (portfolio_file == NULL) {
+                    printf(RED "Error: Could not save portfolio for %s\n" RESET, currentUser->username);
+                    continue; // Skip this user
+                }
+
+                // 4. Loop through their stocks and write to their file
+                for (int j = 0; j < currentUser->stocks_owned; j++) {
+                    fprintf(portfolio_file, "%s,%d\n",
+                            currentUser->portfolio[j].ticker,
+                            currentUser->portfolio[j].quantity);
+                }
+
+                fclose(portfolio_file);
+            }
+        }
+
+        fclose(user_file);
+        printf(GREEN "All data saved successfully.\n" RESET);
+    }
+
+

@@ -7,6 +7,5 @@
 #define YELLOW "\033[33m"
 #define BOLDRED "\033[1m\033[31m"
 #define CYAN "\033[36m"
+#define MAGENTA "\033[35m"
 #endif
-
-

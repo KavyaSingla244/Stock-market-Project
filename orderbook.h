@@ -16,5 +16,6 @@ struct Order
 };
 void place_buy_order(struct User *currentUser);
 void place_sell_order(struct User *currentUser);
+void match_trades();
 #endif
 

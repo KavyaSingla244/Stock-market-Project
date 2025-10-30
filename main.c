@@ -30,6 +30,7 @@ int main() {
 
 
             printf("Exiting.Goodbye!\n");
+            save_all_data();
             return 0;
 
             default:

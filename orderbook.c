@@ -166,4 +166,19 @@ void place_sell_order(struct User *currentUser){
 
     add_order_to_list(newOrder);
     printf(GREEN "\nSell order for %d shares %s at $%.2f placed successfully.\n" RESET,quantity_input,ticker_input,price_input);
+
+}
+
+static void update_portfolio(struct User *user, char *ticker, int quantity) {
+    struct PortfolioItem *item = get_portfolio_item(user, ticker);
+
+    if (item != NULL) {
+        item->quantity += quantity;
+    } else {
+        if (user->stocks_owned < 30) { 
+            strcpy(user->portfolio[user->stocks_owned].ticker, ticker);
+            user->portfolio[user->stocks_owned].quantity = quantity;
+            user->stocks_owned++;
+        }
+    }
 }

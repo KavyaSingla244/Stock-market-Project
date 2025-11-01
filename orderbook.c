@@ -19,7 +19,7 @@ const int NUM_VALID_STOCKS=6;
 double live_tata_price = 500.00;
 double live_reli_price = 3100.00;
 double live_wipro_price = 450.00;
-double live_infy_price = 1520.00;
+double live_infosys_price = 1520.00;
 double live_hdfc_price = 1600.00;
 double live_sbi_price = 600.00;
 
@@ -180,58 +180,76 @@ void place_sell_order(struct User *currentUser){
 
 
 
- 
+/*
+ * This "helper" function finds and updates a stock in
+ * a user's portfolio. If the stock isn't found, it adds it.
+ * (Corrected version)
+*/
 static void update_portfolio(struct User *user, char *ticker, int quantity, double new_cost_per_share) {
     struct PortfolioItem *item = get_portfolio_item(user, ticker);
 
     if (item != NULL) {
+        // --- User already owns this stock, calculate new average ---
         
-
-        
+        // 1. Calculate the total cost of old shares
         double old_total_cost = item->avg_cost * item->quantity;
-
         
+        // 2. Calculate the total cost of new shares
         double new_total_cost = new_cost_per_share * quantity;
-
         
+        // 3. Calculate the new total quantity
         int new_total_quantity = item->quantity + quantity;
-
         
-        item->avg_cost = (old_total_cost + new_total_cost) / new_total_quantity;
-
+        // 4. Calculate the new weighted average cost
+        if (new_total_quantity > 0) {
+            item->avg_cost = (old_total_cost + new_total_cost) / new_total_quantity;
+        } else {
+            item->avg_cost = 0.0;
+        }
         
+        // 5. Add the new quantity
         item->quantity = new_total_quantity;
 
     } else {
-        
-        if (user->stocks_owned < 30) { 
+        // --- This is the first time user is buying this stock ---
+        if (user->stocks_owned < 30) { // Check if portfolio is full
             strcpy(user->portfolio[user->stocks_owned].ticker, ticker);
             user->portfolio[user->stocks_owned].quantity = quantity;
-            user->portfolio[user->stocks_owned].avg_cost = new_cost_per_share; 
+            user->portfolio[user->stocks_owned].avg_cost = new_cost_per_share;
             user->stocks_owned++;
         }
     }
 }
 
-
+/*
+ * ===================================================================
+ * MATCH TRADES (The "Brain") - FINAL Corrected Version
+ * ===================================================================
+*/
 void match_trades() {
+    
+    // We use a label to restart the entire search after a trade
+restart_matching:
+    ; // A 'goto' must jump to a statement, and an empty ; is a statement
+
     struct Order *buy_prev = NULL;
     struct Order *buy_curr = buy_order_head;
-
+    
+    // Loop 1: Iterate through all BUY orders
     while (buy_curr != NULL) {
-        int trade_made = 0;
+        
         struct Order *sell_prev = NULL;
         struct Order *sell_curr = sell_order_head;
 
-        
+        // Loop 2: For each BUY order, iterate through all SELL orders
         while (sell_curr != NULL) {
-
-
+            
+            // Check for a match
             if (strcmp(buy_curr->ticker, sell_curr->ticker) == 0 &&
                 buy_curr->price >= sell_curr->price &&
                 buy_curr->quantity == sell_curr->quantity) 
             {
-                
+                // --- MATCH FOUND! ---
                 printf(MAGENTA "\n--- TRADE EXECUTED ---\n" RESET);
                 printf("  Ticker: %s\n", buy_curr->ticker);
                 printf("  Shares: %d\n", buy_curr->quantity);
@@ -240,74 +258,63 @@ void match_trades() {
                 printf("  Seller: %s\n", sell_curr->username);
 
                 double trade_cost = sell_curr->price * buy_curr->quantity;
-
+                
                 struct User *buyer = find_user(buy_curr->username);
                 struct User *seller = find_user(sell_curr->username);
 
-                if (buyer == NULL || seller == NULL) {
-                    printf(RED "FATAL ERROR: Could not find user.\n" RESET);
-                    sell_prev = sell_curr;
-                    sell_curr = sell_curr->next;
-                    continue; 
-                }
-
-                
-                seller->cash_balance += trade_cost;
-                seller->available_cash += trade_cost;
+                // --- Update Seller ---
                 struct PortfolioItem *sold_item = get_portfolio_item(seller, sell_curr->ticker);
                 sold_item->quantity -= sell_curr->quantity;
-
+                seller->cash_balance += trade_cost;
+                seller->available_cash += trade_cost;
                 
-                double buy_cost = buy_curr->price * buy_curr->quantity;
-                double refund = buy_cost - trade_cost;
-
+                // --- Update Buyer ---
+                double buy_cost_escrowed = buy_curr->price * buy_curr->quantity;
+                double refund = buy_cost_escrowed - trade_cost;
+                
                 buyer->cash_balance -= trade_cost;
-                buyer->available_cash += refund; 
-                update_portfolio(buyer, buy_curr->ticker, buy_curr->quantity,trade_cost);
-
+                buyer->available_cash += refund; // Give back difference
+                update_portfolio(buyer, buy_curr->ticker, buy_curr->quantity, sell_curr->price);
                 
-
+                // --- Remove Orders & Free Memory ---
+                
+                // 1. Unlink the 'buy' node from its list
                 if (buy_prev == NULL) {
                     buy_order_head = buy_curr->next;
                 } else {
                     buy_prev->next = buy_curr->next;
                 }
-
+                
+                // 2. Unlink the 'sell' node from its list
                 if (sell_prev == NULL) {
                     sell_order_head = sell_curr->next;
                 } else {
                     sell_prev->next = sell_curr->next;
                 }
-
-                struct Order *buy_to_free = buy_curr;
-                struct Order *sell_to_free = sell_curr;
-
-                buy_curr = buy_curr->next; 
-
-                free(buy_to_free);
-                free(sell_to_free);
-
-                trade_made = 1;
+                
+                // 3. Free the memory
+                free(buy_curr);
+                free(sell_curr);
+                
                 printf(MAGENTA "--- TRADE COMPLETE ---\n" RESET);
-                break; 
+
+                // 4. A trade happened, so the lists are changed.
+                // We must restart the *entire* matching process.
+                goto restart_matching; 
 
             } else {
-                
+                // No match, move to next sell order
                 sell_prev = sell_curr;
                 sell_curr = sell_curr->next;
             }
-        } 
+        } // End of sell-loop
 
-        if (trade_made) {
-            continue; 
-        } else {
-            
-            buy_prev = buy_curr;
-            buy_curr = buy_curr->next;
-        }
-    } 
+        // No trade was found for this buy order, move to next buy order
+        buy_prev = buy_curr;
+        buy_curr = buy_curr->next;
+        
+    } // End of buy-loop
 }
-
 
 void fluctuate_prices() {
     
@@ -324,7 +331,7 @@ void fluctuate_prices() {
     } else if (stock_to_change == 2) {
         live_wipro_price = live_wipro_price * (1.0 + change_percent);
     } else if (stock_to_change == 3) {
-        live_infy_price = live_infy_price * (1.0 + change_percent);
+        live_infosys_price = live_infosys_price * (1.0 + change_percent);
     } else if (stock_to_change == 4) {
         live_hdfc_price = live_hdfc_price * (1.0 + change_percent);
     } else if (stock_to_change == 5) {
@@ -337,8 +344,22 @@ double get_live_price(char* ticker) {
     if (strcmp(ticker, "TATA") == 0) return live_tata_price;
     if (strcmp(ticker, "RELI") == 0) return live_reli_price;
     if (strcmp(ticker, "WIPRO") == 0) return live_wipro_price;
-    if (strcmp(ticker, "INFY") == 0) return live_infy_price;
+    if (strcmp(ticker, "INFOSYS") == 0) return live_infosys_price;
     if (strcmp(ticker, "HDFC") == 0) return live_hdfc_price;
     if (strcmp(ticker, "SBI") == 0) return live_sbi_price;
     return 0.0;
+}
+
+
+void view_market_data() {
+    printf(YELLOW "\n--- Live Market Prices ---\n" RESET);
+
+        for (int i = 0; i < NUM_VALID_STOCKS; i++) {
+        const char* ticker = VALID_STOCKS[i];
+        double price = get_live_price((char*)ticker);
+
+                printf("  %-10s: $%.2f\n", ticker, price);
+    }
+
+    printf(YELLOW "---------------------------\n" RESET);
 }

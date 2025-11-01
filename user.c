@@ -6,6 +6,7 @@
 
 
 
+
 struct User all_users[100];
 int number_of_users_registered=0;
 void signup_user(){
@@ -46,7 +47,9 @@ void signup_user(){
 
     printf(GREEN "\nRegistration successfu!Welcome,%s!\n" RESET,all_users[number_of_users_registered].username);
     printf(GREEN "You have deposited $%.2f in virtual cash.\n" RESET,all_users[number_of_users_registered].cash_balance);
+    struct User *newUser= &all_users[number_of_users_registered];
     number_of_users_registered ++;
+    trading_menu(newUser);
 
 }
 
@@ -105,7 +108,8 @@ void trading_menu(struct User *currentUser){
                             printf("1. View Portfolio\n");
                             printf("2. Place Buy Order\n");
                             printf("3. Place Sell Order\n");
-                            printf("4. Logout\n");
+                            printf("4. View Live Market Data\n");
+                            printf("5. Logout\n");
 
                             printf("Enter your choice: ");
                             scanf("%d",&choice);
@@ -121,6 +125,9 @@ void trading_menu(struct User *currentUser){
                                 place_sell_order(currentUser);
                                 break;
                                 case 4:
+                                view_market_data();
+                                break;
+                                case 5:
                                 printf(GREEN "Logging out....\n" RESET);
                                 return;
                                 default:
@@ -132,71 +139,115 @@ void trading_menu(struct User *currentUser){
                     }
 
 void view_portfolio(struct User *currentUser) {
-     printf(CYAN "\n---  %s's Portfolio ---\n" RESET,currentUser->username);
-    printf("Your cash: $%.2f\n", currentUser->cash_balance);
-    printf("Available cash: $%.2f\n", currentUser->available_cash);
+    printf(YELLOW "\n--- %s's Portfolio ---\n" RESET, currentUser->username);
+    printf("Total Cash:   $%.2f\n", currentUser->cash_balance);
+    printf("Available Cash: $%.2f\n", currentUser->available_cash);
+    
+    if (currentUser->stocks_owned == 0) {
+        printf("You do not own any stocks yet.\n");
+    } else {
+        printf("\nYour Stocks:\n");
+        printf("----------------------------------------------------------------------\n");
+        printf("%-10s | %-8s | %-12s | %-12s | %-12s\n",
+               "Ticker", "Shares", "Avg. Cost", "Live Price", "Profit/Loss");
+        printf("----------------------------------------------------------------------\n");
 
-    if (currentUser->stocks_owned==0){
-        printf("You do not own any stocks yet\n");
-    }else {
-        printf("\nYour stocks: \n");
-        for (int i=0;i<currentUser->stocks_owned;i++){
-            printf(" %s : %d shares\n",currentUser->portfolio[i].ticker,currentUser->portfolio[i].quantity);
+        double total_profit_loss = 0.0;
+        
+        for (int i = 0; i < currentUser->stocks_owned; i++) {
+            char* ticker = currentUser->portfolio[i].ticker;
+            int quantity = currentUser->portfolio[i].quantity;
+            double avg_cost = currentUser->portfolio[i].avg_cost;
+            double live_price = get_live_price(ticker); 
+            
+            double profit_loss = (live_price - avg_cost) * quantity;
+            total_profit_loss += profit_loss;
+
+            printf("%-10s | %-8d | $%11.2f | $%11.2f |",
+                   ticker, quantity, avg_cost, live_price);
+            
+                        if (profit_loss >= 0) {
+                printf(GREEN " $%11.2f\n" RESET, profit_loss);
+            } else {
+                
+                printf(RED " -$%10.2f\n" RESET, -profit_loss);
+            }
+        }
+        printf("----------------------------------------------------------------------\n");
+        printf("Total Portfolio P/L: ");
+        
+        if (total_profit_loss >= 0) {
+            printf(GREEN "$%.2f\n" RESET, total_profit_loss);
+        } else {
+            printf(RED "-$%.2f\n" RESET, -total_profit_loss);
         }
     }
-    printf(YELLOW "--------------------\n" RESET);
-
+    printf(YELLOW "----------------------------------------------------------------------\n" RESET);
 }
 
 
-void load_all_data(){
-    FILE *user_file=fopen("users.txt","r");
-    if (user_file==NULL){
-        printf("No user database found.Starting fresh.\n");
+
+void load_all_data() {
+    FILE *user_file = fopen("users.txt", "r");
+    if (user_file == NULL) {
+        printf("No user database found. Starting fresh.\n");
         return;
     }
 
-    char username[50];
-    char password[50];
-    double cash;
+    char line_buffer[256]; // A buffer to read one line at a time
 
-    while(fscanf(user_file,"%[^,],%[^,],%lf\n",username,password,&cash)==3){
-        if(number_of_users_registered>=100){
-            break;
-        }
-        struct User *currentUser=&all_users[number_of_users_registered];
+    // --- Read users.txt ---
+    while (fgets(line_buffer, sizeof(line_buffer), user_file) != NULL) {
+        if (number_of_users_registered >= 100) break;
+        
+        char username[50];
+        char password[50];
+        double cash;
 
-        strcpy(currentUser->username,username);
-        strcpy(currentUser->password,password);
-        currentUser->cash_balance=cash;
-        currentUser->available_cash=cash;
-        currentUser->stocks_owned=0;
-        char portfolio_filename[100];
-        sprintf(portfolio_filename,"%s_portfolio.txt",username);
-        FILE *portfolio_file=fopen(portfolio_filename,"r");
-        if (portfolio_file!=NULL){
-            char ticker[30];
-            int quantity;
-            int stock_index=0;
+        // sscanf parses the line buffer. This is much safer than fscanf.
+        if (sscanf(line_buffer, "%[^,],%[^,],%lf", username, password, &cash) == 3) {
+            
+            struct User *currentUser = &all_users[number_of_users_registered];
+            
+            strcpy(currentUser->username, username);
+            strcpy(currentUser->password, password);
+            currentUser->cash_balance = cash;
+            currentUser->available_cash = cash;
+            currentUser->stocks_owned = 0;
 
-            while(fscanf(portfolio_file,"%[^,],%d\n",ticker,&quantity)==2){
-                if (stock_index>=30)
-                break;
+            // --- Read the corresponding portfolio file ---
+            char portfolio_filename[100];
+            sprintf(portfolio_filename, "%s_portfolio.txt", username);
+            
+            FILE *portfolio_file = fopen(portfolio_filename, "r");
+            if (portfolio_file != NULL) {
+                char portfolio_line_buffer[100];
+                int stock_index = 0;
 
-                strcpy(currentUser->portfolio[stock_index].ticker,ticker);
-                currentUser->portfolio[stock_index].quantity=quantity;
-                stock_index++;
+                // Read the portfolio file line by line
+                while (fgets(portfolio_line_buffer, sizeof(portfolio_line_buffer), portfolio_file) != NULL) {
+                    if (stock_index >= 30) break;
+                    
+                    char ticker[30];
+                    int quantity;
+
+                    // Parse the portfolio line
+                    if (sscanf(portfolio_line_buffer, "%[^,],%d", ticker, &quantity) == 2) {
+                        strcpy(currentUser->portfolio[stock_index].ticker, ticker);
+                        currentUser->portfolio[stock_index].quantity = quantity;
+                        currentUser->portfolio[stock_index].avg_cost = get_live_price(ticker);
+                        stock_index++;
+                    }
+                }
+                currentUser->stocks_owned = stock_index;
+                fclose(portfolio_file);
             }
-            currentUser->stocks_owned=stock_index;
-            fclose(portfolio_file);
+            number_of_users_registered++;
         }
-        number_of_users_registered++;
-
-
     }
+    
     fclose(user_file);
 }
-
 
 struct User* find_user(char *username) {
     for (int i = 0; i < number_of_users_registered; i++) {
@@ -209,8 +260,7 @@ struct User* find_user(char *username) {
 }
 
 void save_all_data() {
-        // Open the main users file in "write" mode,
-        // which erases the old file.
+        
         FILE *user_file = fopen("users.txt", "w");
         if (user_file == NULL) {
             printf(RED "FATAL ERROR: Could not open users.txt for saving.\n" RESET);

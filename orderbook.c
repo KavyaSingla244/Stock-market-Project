@@ -42,7 +42,7 @@ struct PortfolioItem* get_portfolio_item(struct User *currentUser,char *ticker){
     return NULL;
 }
 
-static void add_order_to_list(struct Order *newOrder){
+ void add_order_to_list(struct Order *newOrder){
     newOrder->next=NULL;
     struct Order **head_ptr;
 
@@ -180,12 +180,8 @@ void place_sell_order(struct User *currentUser){
 
 
 
-/*
- * This "helper" function finds and updates a stock in
- * a user's portfolio. If the stock isn't found, it adds it.
- * (Corrected version)
-*/
-static void update_portfolio(struct User *user, char *ticker, int quantity, double new_cost_per_share) {
+
+ static void update_portfolio(struct User *user, char *ticker, int quantity, double new_cost_per_share) {
     struct PortfolioItem *item = get_portfolio_item(user, ticker);
 
     if (item != NULL) {
@@ -221,11 +217,7 @@ static void update_portfolio(struct User *user, char *ticker, int quantity, doub
     }
 }
 
-/*
- * ===================================================================
- * MATCH TRADES (The "Brain") - FINAL Corrected Version
- * ===================================================================
-*/
+
 void match_trades() {
     
     // We use a label to restart the entire search after a trade
@@ -359,6 +351,81 @@ void view_market_data() {
         double price = get_live_price((char*)ticker);
 
                 printf("  %-10s: $%.2f\n", ticker, price);
+    }
+
+    printf(YELLOW "---------------------------\n" RESET);
+
+}
+
+/*
+ * This is a recursive "helper" function
+ * to print the buy-order list from
+ * lowest price to highest price.
+*/
+void print_list_reverse(struct Order *head) {
+    if (head == NULL) {
+        return;
+    }
+    print_list_reverse(head->next);
+
+    // Print after the recursive call
+    printf("  %-10s | %-12.2f | %-10d\n",
+           head->username, head->price, head->quantity);
+}
+
+
+void view_order_book() {
+    char ticker_input[10];
+
+    printf(YELLOW "\n--- View Full Order Book ---\n" RESET);
+    printf("Enter stock ticker (TATA, RELI, etc.): ");
+    scanf("%s", ticker_input);
+
+    if (is_ticker_valid(ticker_input) == 0) {
+        printf(RED "Error: '%s' is not a valid stock.\n" RESET, ticker_input);
+        return;
+    }
+
+    printf(CYAN "\n--- Order Book for %s ---\n" RESET, ticker_input);
+
+    // --- Print Sell Orders (Top Down) ---
+    printf(RED "--- SELL ORDERS (ASKS) ---\n" RESET);
+    printf("  User       | Price        | Quantity  \n");
+    printf("  --------------------------------------\n");
+
+    struct Order *temp = sell_order_head;
+    int orders_found = 0;
+    while (temp != NULL) {
+        if (strcmp(temp->ticker, ticker_input) == 0) {
+            printf("  %-10s | $%-11.2f | %-10d\n",
+                   temp->username, temp->price, temp->quantity);
+            orders_found = 1;
+        }
+        temp = temp->next;
+    }
+    if (orders_found == 0) {
+        printf("  (No sell orders)\n");
+    }
+
+    // --- Print Buy Orders (Bottom Up) ---
+    printf(GREEN "\n--- BUY ORDERS (BIDS) ---\n" RESET);
+    printf("  User       | Price        | Quantity  \n");
+    printf("  --------------------------------------\n");
+
+    temp = buy_order_head;
+    orders_found = 0;
+    while (temp != NULL) {
+        if (strcmp(temp->ticker, ticker_input) == 0) {
+            // We will print the buy list "normally" for simplicity.
+            // For a true "bottom up" print, we'd use the recursive helper.
+            printf("  %-10s | $%-11.2f | %-10d\n",
+                   temp->username, temp->price, temp->quantity);
+            orders_found = 1;
+        }
+        temp = temp->next;
+    }
+    if (orders_found == 0) {
+        printf("  (No buy orders)\n");
     }
 
     printf(YELLOW "---------------------------\n" RESET);

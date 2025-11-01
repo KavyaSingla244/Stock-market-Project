@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "user.h"
 #include "colors.h"
 #include "orderbook.h"
@@ -109,7 +110,8 @@ void trading_menu(struct User *currentUser){
                             printf("2. Place Buy Order\n");
                             printf("3. Place Sell Order\n");
                             printf("4. View Live Market Data\n");
-                            printf("5. Logout\n");
+                            printf("5. View Orderbook\n");
+                            printf("6. Logout\n");
 
                             printf("Enter your choice: ");
                             scanf("%d",&choice);
@@ -120,14 +122,19 @@ void trading_menu(struct User *currentUser){
                                 break;
                                 case 2:
                                 place_buy_order(currentUser);
+                                match_trades();
                                 break;
                                 case 3:
                                 place_sell_order(currentUser);
+                                match_trades();
                                 break;
                                 case 4:
                                 view_market_data();
                                 break;
                                 case 5:
+                                view_order_book();
+                                break;
+                                case 6:
                                 printf(GREEN "Logging out....\n" RESET);
                                 return;
                                 default:
@@ -247,7 +254,71 @@ void load_all_data() {
     }
     
     fclose(user_file);
+    
+    FILE *buy_file = fopen("buy_orders.txt", "r");
+    if (buy_file != NULL) {
+        char buy_line[256];
+        while (fgets(buy_line, sizeof(buy_line), buy_file) != NULL) {
+            
+            char username[50], ticker[10];
+            double price;
+            int quantity;
+
+            if (sscanf(buy_line, "%[^,],%[^,],%lf,%d", username, ticker, &price, &quantity) == 4) {
+                // Find the user who placed this order
+                struct User* order_user = find_user(username);
+                if (order_user == NULL) continue; // Skip if user doesn't exist
+
+                double total_cost = price * quantity;
+                if (total_cost > order_user->available_cash) continue; // Skip invalid order
+                
+                // Create the order
+                struct Order *newOrder = (struct Order*) malloc(sizeof(struct Order));
+                strcpy(newOrder->username, username);
+                strcpy(newOrder->ticker, ticker);
+                newOrder->type = 'B';
+                newOrder->quantity = quantity;
+                newOrder->price = price;
+                
+                // Add to the list
+                add_order_to_list(newOrder); // You'll need to make this function non-static
+                
+                // Escrow their cash
+                order_user->available_cash -= total_cost;
+            }
+        }
+        fclose(buy_file);
+    }
+    
+    // --- Load Sell Orders ---
+    FILE *sell_file = fopen("sell_orders.txt", "r");
+    if (sell_file != NULL) {
+        char sell_line[256];
+        while (fgets(sell_line, sizeof(sell_line), sell_file) != NULL) {
+            
+            char username[50], ticker[10];
+            double price;
+            int quantity;
+
+            if (sscanf(sell_line, "%[^,],%[^,],%lf,%d", username, ticker, &price, &quantity) == 4) {
+                // (We'd add sell-side escrow here later)
+                
+                struct Order *newOrder = (struct Order*) malloc(sizeof(struct Order));
+                strcpy(newOrder->username, username);
+                strcpy(newOrder->ticker, ticker);
+                newOrder->type = 'S';
+                newOrder->quantity = quantity;
+                newOrder->price = price;
+                
+                add_order_to_list(newOrder);
+            }
+        }
+        fclose(sell_file);
+    }
+    
+
 }
+
 
 struct User* find_user(char *username) {
     for (int i = 0; i < number_of_users_registered; i++) {

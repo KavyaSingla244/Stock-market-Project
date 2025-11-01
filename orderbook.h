@@ -1,5 +1,6 @@
 #ifndef ORDERBOOK_H
 #define ORDERBOOK_H
+
 #include "user.h"
 
 
@@ -21,5 +22,8 @@ void match_trades();
 void fluctuate_prices();
 double get_live_price(char * ticker);
 void view_market_data();
+void print_list_reverse(struct Order *head);
+void view_order_book();
+void add_order_to_list(struct Order *newOrder);
 #endif
 

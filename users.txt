@@ -8,4 +8,3 @@ daytrader_G,pass123,75000.00
 fund_H,pass123,75000.00
 Harry,pqr123,5000.00
 Ron,weas123,5010.00
-HARIT,GOYAL,8500.00

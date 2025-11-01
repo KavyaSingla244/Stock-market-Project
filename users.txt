@@ -1,8 +1,11 @@
-seller_A,pass123,5000.00
+seller_A,pass123,60014.00
 buyer_ B,hit223,20000.00
-whale_C,blue123,500000.00
+whale_C,blue123,504980.00
 beginner_D,hello123,1000.00
-bank_E,pass123,50000.00
+bank_E,pass123,3496.00
 value_F,pass123,25000.00
 daytrader_G,pass123,75000.00
 fund_H,pass123,75000.00
+Harry,pqr123,5000.00
+Ron,weas123,5010.00
+HARIT,GOYAL,8500.00

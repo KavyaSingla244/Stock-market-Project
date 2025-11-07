@@ -1,42 +1,95 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h> // Required for boolean type in secure_input logic
 #include "user.h"
 #include "colors.h"
 #include "orderbook.h"
-
-
+#include "secure_input.h" // New header for secure password functions
 
 
 struct User all_users[100];
 int number_of_users_registered=0;
+
+// Helper function to consume trailing newline/input from previous scanf/input
+static void consume_input() {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+}
+
 void signup_user(){
     if (number_of_users_registered>=100) {
         printf(RED "Error: User database is full.\n" RESET);
         return ;
     }
 
-
     printf(YELLOW "\n--- New User Registration ---\n" RESET);
+    
+    // 1. Get Username (using friend's original input method)
     printf("Enter the new username: ");
     scanf("%s",all_users[number_of_users_registered].username);
-    printf("Enter new password: ");
-    scanf("%s",all_users[number_of_users_registered].password);
+    consume_input(); // Clear input buffer
+
+    // --- SECURE PASSWORD INPUT START ---
+    char password_buffer[MAX_PASS_LENGTH];
+    char confirm_buffer[MAX_PASS_LENGTH];
+    bool password_valid = false;
+    
+    // Loop until password meets complexity and confirmation requirements
+    while (!password_valid) {
+        printf("\nPassword Requirements:\n");
+        printf(" - Min 8 characters\n");
+        printf(" - 1 Upper Case, 1 Lower Case, 1 Digit, 1 Special Character\n");
+
+        // 2. Get Password (with masking)
+        printf("Enter new password: ");
+        readPassword(password_buffer, MAX_PASS_LENGTH);
+        
+        // 3. Confirm Password (with masking)
+        printf("Confirm password: ");
+        readPassword(confirm_buffer, MAX_PASS_LENGTH);
+
+        // 4. Validate complexity
+        if (!validatePassword(password_buffer)) {
+            printf(RED "\n[ERROR] Password failed complexity check. Please try again.\n" RESET);
+            continue; // Go back to start of while loop
+        }
+
+        // 5. Check match
+        if (strcmp(password_buffer, confirm_buffer) != 0) {
+            printf(RED "\n[ERROR] Passwords do not match. Please try again.\n" RESET);
+            continue; // Go back to start of while loop
+        }
+        
+        // If all checks pass
+        password_valid = true;
+    }
+
+    // Copy the valid, confirmed password into the user struct
+    strcpy(all_users[number_of_users_registered].password, password_buffer);
+    // --- SECURE PASSWORD INPUT END ---
+
 
     double starting_cash=0.0;
     const double MIN_DEPOSIT=100.00;
     const double MAX_DEPOSIT=100000.00;
     while(1) {
-        printf("Enter your starting cash: ");
-        scanf("%lf", &starting_cash);
+        printf("Enter your starting cash: $");
+        // Using scanf for double as originally done by friend
+        if (scanf("%lf", &starting_cash) != 1) {
+            printf(RED "Invalid input. Please enter a number.\n" RESET);
+            consume_input();
+            continue;
+        }
+        consume_input();
 
-        if (starting_cash<MIN_DEPOSIT) {
+        if (starting_cash < MIN_DEPOSIT) {
             printf(RED "Deposit is too low. Minimum is $%.2f\n" RESET ,MIN_DEPOSIT);
         
-        }else if (starting_cash>MAX_DEPOSIT) {
+        } else if (starting_cash > MAX_DEPOSIT) {
 
-             printf(RED "Deposit is too high. Maximum is $%.2f\n" RESET ,MAX_DEPOSIT);
-        }else {
+            printf(RED "Deposit is too high. Maximum is $%.2f\n" RESET ,MAX_DEPOSIT);
+        } else {
             break;
         }
     }
@@ -46,7 +99,7 @@ void signup_user(){
     all_users[number_of_users_registered].stocks_owned=0;
 
 
-    printf(GREEN "\nRegistration successfu!Welcome,%s!\n" RESET,all_users[number_of_users_registered].username);
+    printf(GREEN "\nRegistration successful! Welcome,%s!\n" RESET,all_users[number_of_users_registered].username);
     printf(GREEN "You have deposited $%.2f in virtual cash.\n" RESET,all_users[number_of_users_registered].cash_balance);
     struct User *newUser= &all_users[number_of_users_registered];
     number_of_users_registered ++;
@@ -62,6 +115,7 @@ void login_user(){
             printf(YELLOW "\n---- User Login ---\n" RESET);
             printf("Enter username: ");
             scanf("%s",username_input);
+            consume_input();
 
             if (strcmp(username_input,"exit")==0){
                 printf("Returning to main menu....\n");
@@ -69,8 +123,12 @@ void login_user(){
             }
 
             printf("Enter password: ");
-            scanf("%s", password_input);
+            // Now using the secure readPassword function for login
+            readPassword(password_input, MAX_PASS_LENGTH); 
 
+            // If the user's password from the file is encrypted/hashed,
+            // this is where you would encrypt/hash password_input before comparison.
+            
             int user_found=0;
 
         int i=0;
@@ -97,11 +155,10 @@ void login_user(){
 }
 
 
-
 void trading_menu(struct User *currentUser){
-                        int choice=0;
+                    int choice=0;
 
-                        while(1){
+                    while(1){
                             fluctuate_prices();
                             printf(CYAN "\n---  %s's Trading Menu ---\n" RESET,currentUser->username);
                             printf("Your cash: $%.2f\n", currentUser->cash_balance);
@@ -114,7 +171,13 @@ void trading_menu(struct User *currentUser){
                             printf("6. Logout\n");
 
                             printf("Enter your choice: ");
-                            scanf("%d",&choice);
+                            // Cleaned up original input method
+                            if (scanf("%d",&choice) != 1) {
+                                choice = -1; // Set to invalid choice on scan failure
+                                consume_input();
+                            } else {
+                                consume_input();
+                            }
 
                             switch(choice) {
                                 case 1:
@@ -139,11 +202,11 @@ void trading_menu(struct User *currentUser){
                                 return;
                                 default:
                                 printf(RED "Invalid choice.Please try again.\n" RESET);
-                                while (getchar()!='\n'); // ?
+                                // The input cleaning is now handled above.
                             }
 
-                        }
                     }
+                }
 
 void view_portfolio(struct User *currentUser) {
     printf(YELLOW "\n--- %s's Portfolio ---\n" RESET, currentUser->username);
@@ -191,7 +254,6 @@ void view_portfolio(struct User *currentUser) {
     }
     printf(YELLOW "----------------------------------------------------------------------\n" RESET);
 }
-
 
 
 void load_all_data() {
@@ -281,7 +343,7 @@ void load_all_data() {
                 newOrder->price = price;
                 
                 // Add to the list
-                add_order_to_list(newOrder); // You'll need to make this function non-static
+                add_order_to_list(newOrder); 
                 
                 // Escrow their cash
                 order_user->available_cash -= total_cost;
@@ -343,9 +405,9 @@ void save_all_data() {
             struct User *currentUser = &all_users[i];
 
                         fprintf(user_file, "%s,%s,%.2f\n",
-                    currentUser->username,
-                    currentUser->password,
-                    currentUser->cash_balance); 
+                            currentUser->username,
+                            currentUser->password, // NOTE: Password is saved in plaintext. In a real app, this should be a hash.
+                            currentUser->cash_balance); 
 
                         if (currentUser->stocks_owned > 0) {
                 char portfolio_filename[100];
@@ -370,5 +432,3 @@ void save_all_data() {
         fclose(user_file);
         printf(GREEN "All data saved successfully.\n" RESET);
     }
-
-

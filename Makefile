@@ -6,7 +6,7 @@ CC = gcc
 
 CFLAGS = -g -Wall
 
-SRCS = main.c user.c orderbook.c
+SRCS = main.c user.c orderbook.c secure_input.c
 
 
 OBJS = $(SRCS:.c=.o)
@@ -23,4 +23,3 @@ $(TARGET): $(OBJS)
 
 clean:
 	rm -f $(TARGET) $(OBJS)
-

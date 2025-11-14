@@ -430,5 +430,6 @@ void save_all_data() {
         }
 
         fclose(user_file);
+        save_order_books();
         printf(GREEN "All data saved successfully.\n" RESET);
     }

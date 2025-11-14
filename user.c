@@ -305,14 +305,15 @@ void load_all_data() {
                         strcpy(currentUser->portfolio[stock_index].ticker, ticker);
                         currentUser->portfolio[stock_index].quantity = quantity;
                         currentUser->portfolio[stock_index].avg_cost = get_live_price(ticker);
+                         currentUser->portfolio[stock_index].available_quantity = quantity;
                         stock_index++;
-                    }
                 }
                 currentUser->stocks_owned = stock_index;
                 fclose(portfolio_file);
             }
             number_of_users_registered++;
         }
+    }
     }
     
     fclose(user_file);
@@ -380,6 +381,7 @@ void load_all_data() {
     
 
 }
+
 
 
 struct User* find_user(char *username) {

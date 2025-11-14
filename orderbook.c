@@ -430,3 +430,45 @@ void view_order_book() {
 
     printf(YELLOW "---------------------------\n" RESET);
 }
+
+
+
+void save_order_books() {
+    // --- 1. Save Buy Orders ---
+    FILE *buy_file = fopen("buy_orders.txt", "w");
+    if (buy_file == NULL) {
+        printf(RED "Error: Could not save buy_orders.txt\n" RESET);
+        return;
+    }
+
+    struct Order *temp = buy_order_head;
+    while (temp != NULL) {
+        
+        fprintf(buy_file, "%s,%s,%.2f,%d\n",
+                temp->username,
+                temp->ticker,
+                temp->price,
+                temp->quantity);
+        temp = temp->next;
+    }
+    fclose(buy_file);
+
+    
+    FILE *sell_file = fopen("sell_orders.txt", "w");
+    if (sell_file == NULL) {
+        printf(RED "Error: Could not save sell_orders.txt\n" RESET);
+        return;
+    }
+
+    temp = sell_order_head;
+    while (temp != NULL) {
+    
+        fprintf(sell_file, "%s,%s,%.2f,%d\n",
+                temp->username,
+                temp->ticker,
+                temp->price,
+                temp->quantity);
+        temp = temp->next;
+    }
+    fclose(sell_file);
+}

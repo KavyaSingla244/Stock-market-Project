@@ -78,7 +78,7 @@ void signup_user(){
         // Using scanf for double as originally done by friend
         if (scanf("%lf", &starting_cash) != 1) {
             printf(RED "Invalid input. Please enter a number.\n" RESET);
-            consume_input();
+            consume_input(); // to clear the garbage from input buffer
             continue;
         }
         consume_input();
@@ -94,16 +94,17 @@ void signup_user(){
         }
     }
 
-    all_users[number_of_users_registered].cash_balance=starting_cash; //
-    all_users[number_of_users_registered].available_cash=starting_cash; //
+    all_users[number_of_users_registered].cash_balance=starting_cash; // total money the user has in the system.
+    all_users[number_of_users_registered].available_cash=starting_cash; // the money they can use to trade (same as starting cash initially).
     all_users[number_of_users_registered].stocks_owned=0;
 
 
     printf(GREEN "\nRegistration successful! Welcome,%s!\n" RESET,all_users[number_of_users_registered].username);
     printf(GREEN "You have deposited $%.2f in virtual cash.\n" RESET,all_users[number_of_users_registered].cash_balance);
-    struct User *newUser= &all_users[number_of_users_registered];
+    struct User *newUser= &all_users[number_of_users_registered]; // creates a pointer to the currently registered user so you can pass it to other functions easily
     number_of_users_registered ++;
-    trading_menu(newUser);
+    trading_menu(newUser); // This makes the user jump directly to the trading menu after registration.
+
 
 }
 
@@ -115,9 +116,9 @@ void login_user(){
             printf(YELLOW "\n---- User Login ---\n" RESET);
             printf("Enter username: ");
             scanf("%s",username_input);
-            consume_input();
+            consume_input(); // to clear the garbage for input buffer
 
-            if (strcmp(username_input,"exit")==0){
+            if (strcmp(username_input,"exit")==0){ // if user types exit in the username_input it returns to main menu
                 printf("Returning to main menu....\n");
                 return;
             }
@@ -159,7 +160,8 @@ void trading_menu(struct User *currentUser){
                     int choice=0;
 
                     while(1){
-                            fluctuate_prices();
+                            fluctuate_prices(); /* A function call that is executed before the menu is shown.
+                            Used to update the simulated market prices, so that user sees the latest data. */
                             printf(CYAN "\n---  %s's Trading Menu ---\n" RESET,currentUser->username);
                             printf("Your cash: $%.2f\n", currentUser->cash_balance);
                             printf("-------------------------\n");
@@ -218,17 +220,23 @@ void view_portfolio(struct User *currentUser) {
     } else {
         printf("\nYour Stocks:\n");
         printf("----------------------------------------------------------------------\n");
-        printf("%-10s | %-8s | %-12s | %-12s | %-12s\n",
+        printf("%-10s | %-8s | %-12s | %-12s | %-12s\n", /*
+            -10s means Left align in 10 spaces basically "-" means left allignment
+            and "s" here means that a text is to be printed*/
                "Ticker", "Shares", "Avg. Cost", "Live Price", "Profit/Loss");
         printf("----------------------------------------------------------------------\n");
-
+        /*
+----------------------------------------------------------------------
+Ticker     | Shares   | Avg. Cost    | Live Price   | Profit/Loss  
+----------------------------------------------------------------------
+*/
         double total_profit_loss = 0.0;
         
         for (int i = 0; i < currentUser->stocks_owned; i++) {
             char* ticker = currentUser->portfolio[i].ticker;
             int quantity = currentUser->portfolio[i].quantity;
             double avg_cost = currentUser->portfolio[i].avg_cost;
-            double live_price = get_live_price(ticker); 
+            double live_price = get_live_price(ticker); // gives current stock price
             
             double profit_loss = (live_price - avg_cost) * quantity;
             total_profit_loss += profit_loss;
@@ -266,7 +274,8 @@ void load_all_data() {
     char line_buffer[256]; // A buffer to read one line at a time
 
     // --- Read users.txt ---
-    while (fgets(line_buffer, sizeof(line_buffer), user_file) != NULL) {
+    while (fgets(line_buffer, sizeof(line_buffer), user_file) != NULL) { // fgets() reads one line from the file into line_buffer.
+         // The loop continues until there are no more lines
         if (number_of_users_registered >= 100) break;
         
         char username[50];
@@ -275,7 +284,11 @@ void load_all_data() {
 
         // sscanf parses the line buffer. This is much safer than fscanf.
         if (sscanf(line_buffer, "%[^,],%[^,],%lf", username, password, &cash) == 3) {
-            
+            /*	sscanf() = “string scanf” — it reads from a string, not directly from input.
+		The format "%[^,],%[^,],%lf" means:
+	    %[^,] → read all characters until a comma (for username)
+		%[^,] → read until next comma (for password)
+    	%lf → read a floating-point number (for cash)  */
             struct User *currentUser = &all_users[number_of_users_registered];
             
             strcpy(currentUser->username, username);
@@ -287,7 +300,7 @@ void load_all_data() {
             // --- Read the corresponding portfolio file ---
             char portfolio_filename[100];
             sprintf(portfolio_filename, "%s_portfolio.txt", username);
-            
+            // Each user has their own file for stock data.
             FILE *portfolio_file = fopen(portfolio_filename, "r");
             if (portfolio_file != NULL) {
                 char portfolio_line_buffer[100];
@@ -301,8 +314,9 @@ void load_all_data() {
                     int quantity;
 
                     // Parse the portfolio line
-                    if (sscanf(portfolio_line_buffer, "%[^,],%d", ticker, &quantity) == 2) {
-                        strcpy(currentUser->portfolio[stock_index].ticker, ticker);
+                    if (sscanf(portfolio_line_buffer, "%[^,],%d", ticker, &quantity) == 2) { // == 2 is checking that the line was valid.
+                        strcpy(currentUser->portfolio[stock_index].ticker, ticker); // it is a string inside the struct.
+                        // strcpy copies the ticker name into that struct field.
                         currentUser->portfolio[stock_index].quantity = quantity;
                         currentUser->portfolio[stock_index].avg_cost = get_live_price(ticker);
                          currentUser->portfolio[stock_index].available_quantity = quantity;
@@ -318,10 +332,13 @@ void load_all_data() {
     
     fclose(user_file);
     
+
+    /* it reads each saved order, Validates the user,Checks money, Reconstructs an Order struct,
+     Adds it into your order list,Deducts (escrows) the money again */
     FILE *buy_file = fopen("buy_orders.txt", "r");
-    if (buy_file != NULL) {
+    if (buy_file != NULL) { // If the file doesn’t exist, buy_file = NULL
         char buy_line[256];
-        while (fgets(buy_line, sizeof(buy_line), buy_file) != NULL) {
+        while (fgets(buy_line, sizeof(buy_line), buy_file) != NULL) { // Reads one line at a time into buy_line
             
             char username[50], ticker[10];
             double price;
@@ -334,12 +351,13 @@ void load_all_data() {
 
                 double total_cost = price * quantity;
                 if (total_cost > order_user->available_cash) continue; // Skip invalid order
+                // If user doesn’t have enough cash then ignore this saved order
                 
-                // Create the order
+                // Creating the order
                 struct Order *newOrder = (struct Order*) malloc(sizeof(struct Order));
                 strcpy(newOrder->username, username);
                 strcpy(newOrder->ticker, ticker);
-                newOrder->type = 'B';
+                newOrder->type = 'B'; // B for Buy
                 newOrder->quantity = quantity;
                 newOrder->price = price;
                 
@@ -347,7 +365,7 @@ void load_all_data() {
                 add_order_to_list(newOrder); 
                 
                 // Escrow their cash
-                order_user->available_cash -= total_cost;
+                order_user->available_cash -= total_cost; // Available cash for buying new stocks is reduced but cash balance is reduced only when trade is executed.
             }
         }
         fclose(buy_file);
@@ -363,13 +381,13 @@ void load_all_data() {
             double price;
             int quantity;
 
-            if (sscanf(sell_line, "%[^,],%[^,],%lf,%d", username, ticker, &price, &quantity) == 4) {
+            if (sscanf(sell_line, "%[^,],%[^,],%lf,%d", username, ticker, &price, &quantity) == 4) { // sell_line temporarily holds the text of one order
                 // (We'd add sell-side escrow here later)
                 
                 struct Order *newOrder = (struct Order*) malloc(sizeof(struct Order));
                 strcpy(newOrder->username, username);
                 strcpy(newOrder->ticker, ticker);
-                newOrder->type = 'S';
+                newOrder->type = 'S'; // S for Sell
                 newOrder->quantity = quantity;
                 newOrder->price = price;
                 
@@ -404,13 +422,13 @@ void save_all_data() {
 
         
         for (int i = 0; i < number_of_users_registered; i++) {
-            struct User *currentUser = &all_users[i];
+            struct User *currentUser = &all_users[i]; // gives the address of the matched user struct.
 
-                        fprintf(user_file, "%s,%s,%.2f\n",
+                        fprintf(user_file, "%s,%s,%.2f\n", // fprintf() works like printf(), but writes to a file instead of the console.
                             currentUser->username,
                             currentUser->password, // NOTE: Password is saved in plaintext. In a real app, this should be a hash.
                             currentUser->cash_balance); 
-
+                            // harit,MyPass123,50000.00
                         if (currentUser->stocks_owned > 0) {
                 char portfolio_filename[100];
                 sprintf(portfolio_filename, "%s_portfolio.txt", currentUser->username);

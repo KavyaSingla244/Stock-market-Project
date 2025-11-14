@@ -148,14 +148,14 @@ void place_sell_order(struct User *currentUser){
     }
     printf("Enter desired price: $");
     scanf("%lf", &price_input);
-    printf("Enter quantity to sell (You own %d): ",item_to_sell->quantity);
+    printf("Enter quantity to sell (You own %d): ",item_to_sell->available_quantity);
     scanf("%d",&quantity_input);
 
     if (price_input<=0||quantity_input<=0){
         printf(RED "ERROR: Price and quantity must be positive.\n" RESET);
         return;
     }
-    if (quantity_input>item_to_sell->quantity){
+    if (quantity_input>item_to_sell->available_quantity){
         printf(RED "ERROR: Insufficient stocks.\n" RESET);
         return;
     }
@@ -174,6 +174,7 @@ void place_sell_order(struct User *currentUser){
 
 
     add_order_to_list(newOrder);
+    item_to_sell->available_quantity-=quantity_input;
     printf(GREEN "\nSell order for %d shares %s at $%.2f placed successfully.\n" RESET,quantity_input,ticker_input,price_input);
 }
 
@@ -212,6 +213,7 @@ void place_sell_order(struct User *currentUser){
             strcpy(user->portfolio[user->stocks_owned].ticker, ticker);
             user->portfolio[user->stocks_owned].quantity = quantity;
             user->portfolio[user->stocks_owned].avg_cost = new_cost_per_share;
+            user->portfolio[user->stocks_owned].available_quantity = quantity;
             user->stocks_owned++;
         }
     }

@@ -46,8 +46,8 @@ This project was built from scratch in C, focusing on robust,modular design and 
 This project is buit using 'make'.
 
 1. **Clone the respiratory:**
-   git clone[hhtps://github.com/KavyaSingla244/Stock-market-Project.git]
-   cd Stock-market-Project
+   git clone [https://github.com/KavyaSingla244/Stock-market-Project.git](https://github.com/KavyaSingla244/Stock-market-Project.git)
+     cd Stock-market-Project
 
 2. **Compile the program:**
     make

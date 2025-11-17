@@ -21,7 +21,7 @@ void readPassword(char *password, int max_len) {
     }
     
     newt = oldt;
-    // Disable canonical mode (line buffering) and echo (displaying characters)
+    
     newt.c_lflag &= ~(ICANON | ECHO);
     
     if (tcsetattr(STDIN_FILENO, TCSANOW, &newt) != 0) {
@@ -29,32 +29,30 @@ void readPassword(char *password, int max_len) {
         exit(EXIT_FAILURE);
     }
 
-    // Read characters one by one
+    
     while (i < max_len - 1 && (ch = getchar()) != '\n' && ch != EOF) {
         if (ch == 127 || ch == '\b') { // Handle backspace/delete
             if (i > 0) {
                 i--;
-                printf("\b \b"); // Move cursor back, overwrite with space, move back again
+                printf("\b \b"); 
             }
         } else {
             password[i++] = ch;
             printf("*");
         }
     }
-    password[i] = '\0'; // Null terminate the string
+    password[i] = '\0'; 
     printf("\n"); 
 
-    // Restore original terminal settings
+    
     if (tcsetattr(STDIN_FILENO, TCSANOW, &oldt) != 0) {
         perror("tcsetattr failed");
         exit(EXIT_FAILURE);
     }
 }
 
-/**
- * @brief Validates a password against complexity requirements (Min 8 chars, 
- * 1 uppercase, 1 lowercase, 1 digit, 1 special char).
- */
+
+ 
 bool validatePassword(const char *password) {
     // 1. Minimum length check
     if (strlen(password) < 8) {
@@ -67,7 +65,7 @@ bool validatePassword(const char *password) {
     bool has_digit = false;
     bool has_special = false;
     
-    // Set of valid special characters
+    
     const char *special_chars = "!@#$%^&*()-_+=[]{}|;:,.<>?/~`";
 
     for (int i = 0; password[i] != '\0'; i++) {
@@ -82,7 +80,7 @@ bool validatePassword(const char *password) {
         }
     }
 
-    // Check all requirements and print specific failure messages
+    
     bool isValid = has_upper && has_lower && has_digit && has_special;
 
     if (!has_upper) printf(RED "  - FAILED: Must contain at least one uppercase letter (A-Z).\n" RESET);

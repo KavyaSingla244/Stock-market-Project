@@ -2,7 +2,7 @@
 
 
 # C Stock Market Simulator 
-This is a compehensive multi-user stock market simulator built entirely in C.It emulates a real-world stock exchange by using persistent "Order Book" model.
+This is a comprehensive multi-user stock market simulator built entirely in C.It emulates a real-world stock exchange by using persistent "Order Book" model.
 This program features a hybrid system:
 a "live price ticker" provides dynamic market data for analysis while a powerful "matching engine" executes trades only when buyer' bid meets a seller's ask. All user data,portfolios, and pending market orders are saved to '.txt' files,making the entire market persistent between sessions.
 

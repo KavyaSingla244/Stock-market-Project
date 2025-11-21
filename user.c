@@ -172,8 +172,9 @@ void trading_menu(struct User *currentUser){
                             printf("3. Place Sell Order\n");
                             printf("4. View Live Market Data\n");
                             printf("5. View Orderbook\n");
-                            printf("6. Settings\n");
-                            printf("7. Logout\n");
+                            printf("6. View Transaction History\n");
+                            printf("7. Settings\n");
+                            printf("8. Logout\n");
 
                             printf("Enter your choice: ");
                             // Cleaned up original input method
@@ -203,11 +204,14 @@ void trading_menu(struct User *currentUser){
                                 view_order_book();
                                 break;
                                 case 6:
+                                view_transaction_history(currentUser);
+                                break;
+                                case 7:
                                 if (settings_menu(currentUser)==1){
                                     return;
                                 }
                                 break;
-                                case 7:
+                                case 8:
                                 printf(GREEN "Logging out....\n" RESET);
                                 return;
                                 default:
@@ -315,6 +319,26 @@ int delete_account(struct User *currentUser) {
 
     printf(RED "Account deleted successfully.\n" RESET);
     return 1; // Signal that deletion happened
+}
+
+void view_transaction_history(struct User *currentUser) {
+    char filename[100];
+    sprintf(filename, "%s_history.txt", currentUser->username);
+    
+    FILE *file = fopen(filename, "r");
+    
+    printf(YELLOW "\n--- Transaction History for %s ---\n" RESET, currentUser->username);
+    
+    if (file == NULL) {
+        printf("No history found.\n");
+    } else {
+        char line[256];
+        while (fgets(line, sizeof(line), file)) {
+            printf("%s", line);
+        }
+        fclose(file);
+    }
+    printf(YELLOW "-----------------------------------\n" RESET);
 }
 
 /* * The Settings Menu. Returns 1 if account was deleted, 0 otherwise.

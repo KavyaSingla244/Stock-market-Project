@@ -23,6 +23,27 @@ double live_infosys_price = 1520.00;
 double live_hdfc_price = 1600.00;
 double live_sbi_price = 600.00;
 
+/*
+ * Helper function to append a trade record to a user's history file.
+ */
+void record_transaction(char *username, char *type, char *ticker, int quantity, double price) {
+    char filename[100];
+    sprintf(filename, "%s_history.txt", username);
+    
+    // Open in "append" mode ("a") so we don't delete old history
+    FILE *file = fopen(filename, "a");
+    if (file == NULL) return;
+
+    double total = quantity * price;
+    
+    // Format: TYPE | TICKER | QTY | PRICE | TOTAL
+    fprintf(file, "%s | %s | %d shares @ $%.2f | Total: $%.2f\n", 
+            type, ticker, quantity, price, total);
+            
+    fclose(file);
+}
+
+
 
 int is_ticker_valid(char* ticker_input) {
     for (int i=0;i<NUM_VALID_STOCKS;i++){
@@ -269,7 +290,11 @@ restart_matching:
                 buyer->cash_balance -= trade_cost;
                 buyer->available_cash += refund; // Give back difference
                 update_portfolio(buyer, buy_curr->ticker, buy_curr->quantity, sell_curr->price);
-                
+
+                // --- NEW: Record the transaction for both sides ---
+                record_transaction(buyer->username, "BOUGHT", buy_curr->ticker, buy_curr->quantity, sell_curr->price);
+                record_transaction(seller->username, "SOLD  ", sell_curr->ticker, sell_curr->quantity, sell_curr->price);
+
                 // --- Remove Orders & Free Memory ---
                 
                 // 1. Unlink the 'buy' node from its list

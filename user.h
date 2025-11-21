@@ -25,5 +25,7 @@ void view_portfolio(struct User *currentUser);
 void load_all_data();
 struct User* find_user(char *username);
 void save_all_data();
+int settings_menu(struct User *currentUser);
+int delete_account(struct User *currentUser);
 
 #endif

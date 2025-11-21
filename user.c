@@ -108,6 +108,8 @@ void signup_user(){
 
 }
 
+
+
 void login_user(){
     char username_input[50];
     char password_input[50];
@@ -170,7 +172,8 @@ void trading_menu(struct User *currentUser){
                             printf("3. Place Sell Order\n");
                             printf("4. View Live Market Data\n");
                             printf("5. View Orderbook\n");
-                            printf("6. Logout\n");
+                            printf("6. Settings\n");
+                            printf("7. Logout\n");
 
                             printf("Enter your choice: ");
                             // Cleaned up original input method
@@ -200,6 +203,11 @@ void trading_menu(struct User *currentUser){
                                 view_order_book();
                                 break;
                                 case 6:
+                                if (settings_menu(currentUser)==1){
+                                    return;
+                                }
+                                break;
+                                case 7:
                                 printf(GREEN "Logging out....\n" RESET);
                                 return;
                                 default:
@@ -261,6 +269,79 @@ Ticker     | Shares   | Avg. Cost    | Live Price   | Profit/Loss
         }
     }
     printf(YELLOW "----------------------------------------------------------------------\n" RESET);
+}
+
+/* * Deletes the current user's portfolio file and removes them from the array.
+ * Returns 1 if deleted (so we can logout), 0 if cancelled.
+ */
+int delete_account(struct User *currentUser) {
+    char confirm;
+    printf(RED "\n!!! WARNING: DELETING ACCOUNT !!!\n" RESET);
+    printf("This will permanently delete your funds and portfolio.\n");
+    printf("Are you sure you want to proceed? (y/n): ");
+    
+    // Clear input buffer to avoid skipping the scanf
+    while(getchar() != '\n'); 
+    scanf("%c", &confirm);
+
+    if (confirm != 'y' && confirm != 'Y') {
+        printf("Deletion cancelled.\n");
+        return 0;
+    }
+
+    // 1. Delete the portfolio text file
+    char filename[100];
+    sprintf(filename, "%s_portfolio.txt", currentUser->username);
+    if (remove(filename) == 0) {
+        printf("Portfolio file deleted.\n");
+    }
+
+    // 2. Find the index of the current user in the array
+    int index = -1;
+    for (int i = 0; i < number_of_users_registered; i++) {
+        if (strcmp(all_users[i].username, currentUser->username) == 0) {
+            index = i;
+            break;
+        }
+    }
+
+    // 3. Remove user from array by shifting everyone else left
+    if (index != -1) {
+        for (int i = index; i < number_of_users_registered - 1; i++) {
+            all_users[i] = all_users[i+1];
+        }
+        number_of_users_registered--; // Decrease total count
+    }
+
+    printf(RED "Account deleted successfully.\n" RESET);
+    return 1; // Signal that deletion happened
+}
+
+/* * The Settings Menu. Returns 1 if account was deleted, 0 otherwise.
+ */
+int settings_menu(struct User *currentUser) {
+    int choice = 0;
+    while (1) {
+        printf(CYAN "\n--- Settings ---\n" RESET);
+        printf("1. Delete Account\n");
+        printf("2. Back to Trading Menu\n");
+        printf("----------------\n");
+        printf("Enter choice: ");
+        scanf("%d", &choice);
+
+        if (choice == 1) {
+            // If delete returns 1, we must return 1 to force a logout
+            if (delete_account(currentUser)) {
+                return 1; 
+            }
+        } 
+        else if (choice == 2) {
+            return 0; // Go back
+        } 
+        else {
+            printf(RED "Invalid choice.\n" RESET);
+        }
+    }
 }
 
 

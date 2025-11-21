@@ -1,5 +1,5 @@
-seller_A,pass123,180014.00
-whale_C,blue123,399980.00
+seller_A,pass123,185014.00
+whale_C,blue123,394980.00
 bank_E,pass123,3496.00
 fund_H,pass123,75000.00
 Harry,pqr123,5000.00

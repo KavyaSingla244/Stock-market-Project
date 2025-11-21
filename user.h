@@ -27,5 +27,6 @@ struct User* find_user(char *username);
 void save_all_data();
 int settings_menu(struct User *currentUser);
 int delete_account(struct User *currentUser);
+void view_transaction_history(struct User *currentUser);
 
 #endif

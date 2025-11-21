@@ -164,20 +164,25 @@ void trading_menu(struct User *currentUser){
                     while(1){
                             fluctuate_prices(); /* A function call that is executed before the menu is shown.
                             Used to update the simulated market prices, so that user sees the latest data. */
-                            printf(CYAN "\n---  %s's Trading Menu ---\n" RESET,currentUser->username);
-                            printf("Your cash: $%.2f\n", currentUser->cash_balance);
-                            printf("-------------------------\n");
-                            printf("1. View Portfolio\n");
-                            printf("2. Place Buy Order\n");
-                            printf("3. Place Sell Order\n");
-                            printf("4. View Live Market Data\n");
-                            printf("5. View Orderbook\n");
-                            printf("6. View Transaction History\n");
-                            printf("7. Settings\n");
-                            printf("8. Logout\n");
-
-                            printf("Enter your choice: ");
-                            // Cleaned up original input method
+                           printf("\n");
+        printf(BG_BLUE BOLD_WHITE "                  STOCK MARKET SIMULATOR v1.0                   " RESET "\n");
+        printf("\n");
+        printf(BOLD_YELLOW "  👤 TRADER: " RESET "%-20s", currentUser->username);
+        printf(BOLD_GREEN  "  💰 CASH:   " RESET "$%.2f\n", currentUser->cash_balance);
+        printf(CYAN        "  --------------------------------------------------------------\n" RESET);
+        
+        printf("\n");
+        printf(BOLD_CYAN "  [ 1 ]" RESET "  📊  View Portfolio\n");
+        printf(BOLD_CYAN "  [ 2 ]" RESET "  📈  Place Buy Order\n");
+        printf(BOLD_CYAN "  [ 3 ]" RESET "  📉  Place Sell Order\n");
+        printf(BOLD_CYAN "  [ 4 ]" RESET "  📡  View Live Market Data\n");
+        printf(BOLD_CYAN "  [ 5 ]" RESET "  📖  View Order Book\n");
+        printf(BOLD_CYAN "  [ 6 ]" RESET "  📜  View Transaction History\n");
+        printf(BOLD_CYAN "  [ 7 ]" RESET "  ⚙️   Settings\n");
+        printf(BOLD_RED  "  [ 8 ]" RESET "  🚪  Logout\n");
+        printf("\n");
+        printf(CYAN "  --------------------------------------------------------------\n" RESET);
+        printf("  👉 Select an option: ");
                             if (scanf("%d",&choice) != 1) {
                                 choice = -1; // Set to invalid choice on scan failure
                                 consume_input();

@@ -335,28 +335,22 @@ restart_matching:
     } // End of buy-loop
 }
 
-void fluctuate_prices() {
+/*
+ * Helper function to append the new price to a history file.
+ */
+void save_price_history(char* ticker, double price) {
+    char filename[50];
+    sprintf(filename, "%s_price_history.dat", ticker);
     
-    double change_direction = ((double)rand() / (RAND_MAX / 2)) - 1.0; 
-
-    double change_percent = change_direction * 0.0005; 
-
-    int stock_to_change = rand() % 6; 
-
-    if (stock_to_change == 0) {
-        live_tata_price = live_tata_price * (1.0 + change_percent);
-    } else if (stock_to_change == 1) {
-        live_reli_price = live_reli_price * (1.0 + change_percent);
-    } else if (stock_to_change == 2) {
-        live_wipro_price = live_wipro_price * (1.0 + change_percent);
-    } else if (stock_to_change == 3) {
-        live_infosys_price = live_infosys_price * (1.0 + change_percent);
-    } else if (stock_to_change == 4) {
-        live_hdfc_price = live_hdfc_price * (1.0 + change_percent);
-    } else if (stock_to_change == 5) {
-        live_sbi_price = live_sbi_price * (1.0 + change_percent);
-    }
+    // Open in "append" mode
+    FILE *f = fopen(filename, "a");
+    if (f == NULL) return;
+    
+    // Just save the price
+    fprintf(f, "%.2f\n", price);
+    fclose(f);
 }
+
 
 
 double get_live_price(char* ticker) {
@@ -369,6 +363,63 @@ double get_live_price(char* ticker) {
     return 0.0;
 }
 
+/*
+ * Helper function to calculate a random percentage change
+ * with a specific "bias" and "volatility".
+ */
+double get_complex_tick(double bias, double volatility) {
+    // 1. Get a random number from -1.0 to +1.0
+    double change_direction = ((double)rand() / (RAND_MAX / 2)) - 1.0; 
+    
+    // 2. Add the bias (shift the probability up or down)
+    change_direction += bias;
+
+    // 3. Multiply by volatility (how big the swing is)
+    // A volatility of 0.002 means 0.2% max change per tick.
+    double change_percent = change_direction * volatility;
+    
+    return change_percent;
+}
+
+/*
+ * This function updates the price of EVERY stock
+ * in the market, simulating a busy trading day.
+ */
+void fluctuate_prices() {
+    double change_percent = 0.0;
+
+    // 1. TATA (Stable, Bullish)
+    // Low volatility (0.0005), slight upward bias (0.1)
+    change_percent = get_complex_tick(0.1, 0.0005);
+    live_tata_price *= (1.0 + change_percent);
+    save_price_history("TATA", live_tata_price);
+
+    // 2. RELI (Stable, Bullish)
+    change_percent = get_complex_tick(0.2, 0.0005);
+    live_reli_price *= (1.0 + change_percent);
+    save_price_history("RELI", live_reli_price);
+
+    // 3. WIPRO (Neutral, Medium Volatility)
+    change_percent = get_complex_tick(0.0, 0.001);
+    live_wipro_price *= (1.0 + change_percent);
+    save_price_history("WIPRO", live_wipro_price);
+
+    // 4. INFOSYS (Bearish, Medium Volatility)
+    change_percent = get_complex_tick(-0.2, 0.001);
+    live_infosys_price *= (1.0 + change_percent);
+    save_price_history("INFOSYS", live_infosys_price);
+
+    // 5. HDFC (Stable, Bullish)
+    change_percent = get_complex_tick(0.1, 0.0005);
+    live_hdfc_price *= (1.0 + change_percent);
+    save_price_history("HDFC", live_hdfc_price);
+
+    // 6. SBI (Bearish, High Volatility)
+    // High volatility (0.002), downward bias (-0.3)
+    change_percent = get_complex_tick(-0.3, 0.002);
+    live_sbi_price *= (1.0 + change_percent);
+    save_price_history("SBI", live_sbi_price);
+}
 
 void view_market_data() {
     printf(YELLOW "\n--- Live Market Prices ---\n" RESET);

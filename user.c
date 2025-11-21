@@ -178,9 +178,10 @@ void trading_menu(struct User *currentUser){
         printf(BOLD_CYAN "  [ 4 ]" RESET "  📡  View Live Market Data\n");
         printf(BOLD_CYAN "  [ 5 ]" RESET "  📖  View Order Book\n");
         printf(BOLD_CYAN "  [ 6 ]" RESET "  📜  View Transaction History\n");
-        printf(BOLD_CYAN "  [ 7 ]" RESET "  ⚙️   Settings\n");
-        printf(BOLD_RED  "  [ 8 ]" RESET "  🚪  Logout\n");
-        printf("\n");
+        printf(BOLD_CYAN "  [ 7 ]" RESET "  📈  View Price Chart\n"); // <-- NEW OPTION
+        printf(BOLD_CYAN "  [ 8 ]" RESET "  ⚙️   Settings\n");
+        printf(BOLD_RED  "  [ 9 ]" RESET "  🚪  Logout\n"); 
+                printf("\n");
         printf(CYAN "  --------------------------------------------------------------\n" RESET);
         printf("  👉 Select an option: ");
                             if (scanf("%d",&choice) != 1) {
@@ -212,11 +213,27 @@ void trading_menu(struct User *currentUser){
                                 view_transaction_history(currentUser);
                                 break;
                                 case 7:
+                                {
+                                    char chart_ticker[10];
+                                    printf(YELLOW "\n--- View Price Chart ---\n" RESET);
+                                    printf("Enter ticker to graph: ");
+                                    scanf("%s", chart_ticker);
+
+                                
+                                    if (is_ticker_valid(chart_ticker)) {
+                                        show_price_chart(chart_ticker);
+                                    } else {
+                                        printf(RED "Invalid ticker.\n" RESET);
+                                    }
+                            
+                                }
+                                break;
+                                case 8:
                                 if (settings_menu(currentUser)==1){
                                     return;
                                 }
                                 break;
-                                case 8:
+                                case 9:
                                 printf(GREEN "Logging out....\n" RESET);
                                 return;
                                 default:

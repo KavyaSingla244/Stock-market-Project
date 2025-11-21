@@ -29,4 +29,5 @@ int settings_menu(struct User *currentUser);
 int delete_account(struct User *currentUser);
 void view_transaction_history(struct User *currentUser);
 
+
 #endif

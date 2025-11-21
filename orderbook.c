@@ -550,3 +550,42 @@ void save_order_books() {
     }
     fclose(sell_file);
 }
+
+/*
+ * This function opens Gnuplot and generates a graph
+ * for the specific stock ticker.
+ */
+void show_price_chart(char* ticker) {
+    char filename[50];
+    sprintf(filename, "%s_price_history.dat", ticker);
+    
+    // 1. Check if history exists first
+    FILE *f = fopen(filename, "r");
+    if (f == NULL) {
+        printf(RED "No price history found for %s yet. Wait for markets to tick.\n" RESET, ticker);
+        return;
+    }
+    fclose(f);
+
+    printf(CYAN "Generating chart for %s...\n" RESET, ticker);
+
+    // 2. Open a pipe to gnuplot
+    // -persist means "keep the window open after the command finishes"
+    FILE *gnuplotPipe = popen("gnuplot -persist", "w");
+    
+    if (gnuplotPipe) {
+        // 3. Send commands to Gnuplot
+        fprintf(gnuplotPipe, "set title '%s Price History'\n", ticker);
+        fprintf(gnuplotPipe, "set xlabel 'Time (Ticks)'\n");
+        fprintf(gnuplotPipe, "set ylabel 'Price ($)'\n");
+        fprintf(gnuplotPipe, "set grid\n");
+        
+        // "w lines" means draw a line graph. "lw 2" is line width. "lc rgb" is color.
+        fprintf(gnuplotPipe, "plot '%s' using 0:1 with lines lw 2 lc rgb 'blue' title 'Price'\n", filename);
+        
+        fflush(gnuplotPipe);
+        pclose(gnuplotPipe); // Close the pipe
+    } else {
+        printf(RED "Error: Could not open Gnuplot.\n" RESET);
+    }
+}

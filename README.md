@@ -45,11 +45,11 @@ sudo apt install build-essential gnuplot
 
 ## How to Compile and Run
 
-This project is buit using 'make'.
+This project is built using 'make'.
 
-1. **Clone the respiratory:**
+1. **Clone the repository:**
    git clone [https://github.com/KavyaSingla244/Stock-market-Project.git](https://github.com/KavyaSingla244/Stock-market-Project.git)
-     cd Stock-market-Project
+     cd stock-market-Project
 
 2. **Compile the program:**
     make
@@ -68,5 +68,7 @@ This project was built by:
 * **KavyaSingla244**
 * **Harit-Goyal-17**
 * **Rishi Cherukuri**
+
+---
 
 

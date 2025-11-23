@@ -449,9 +449,9 @@ void load_all_data() {
                          currentUser->portfolio[stock_index].available_quantity = quantity;
                         stock_index++;
                 }
-                currentUser->stocks_owned = stock_index;
-                fclose(portfolio_file);
             }
+            currentUser->stocks_owned = stock_index;
+            fclose(portfolio_file);
             number_of_users_registered++;
         }
     }

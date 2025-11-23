@@ -48,7 +48,7 @@ sudo apt install build-essential gnuplot
 This project is built using 'make'.
 
 1. **Clone the repository:**
-   git clone [https://github.com/KavyaSingla244/Stock-market-Project.git](https://github.com/KavyaSingla244/Stock-market-Project.git)
+   git clone https://github.com/KavyaSingla244/Stock-market-Project.git
      cd stock-market-Project
 
 2. **Compile the program:**

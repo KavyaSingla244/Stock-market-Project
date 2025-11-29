@@ -1,2 +1,2 @@
 stock_simulator
-*.o
+*.o.DS_Store
